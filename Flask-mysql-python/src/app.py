@@ -177,6 +177,7 @@ def obtener_pedidos():
         if pedido_existente:
             # Agregar el producto y su cantidad al pedido existente
             pedido_existente['productos'].append({
+                
                 'id': producto_id,
                 'nombre': producto_nombre,
                 'cantidad': cantidad
@@ -198,8 +199,6 @@ def obtener_pedidos():
     return jsonify(pedidos)
 
 # POST PEDIDOS
-
-from flask import request
 
 @app.route('/api/pedidos', methods=['POST'])
 def crear_pedido():
@@ -233,30 +232,76 @@ def crear_pedido():
 
 # GET ESPECIFICO PEDIDOS
 
-@app.route('/api/pedidos/<int:id>', methods=['GET'])
-def get_pedido(id):
+@app.route('/api/pedidos/<int:pedido_id>', methods=['GET'])
+def obtener_pedido(pedido_id):
     cursor = db.database.cursor()
-    cursor.execute("SELECT * FROM pedidos WHERE id = %s", (id,))
-    pedido = cursor.fetchone()
-    cursor.close()
-    if pedido is not None:
-        return jsonify(pedido)
-    else:
+    cursor.execute("SELECT p.id AS pedido_id, c.rut AS cliente_rut, p.fecha_pedido, pp.producto_id, pr.nombre AS producto_nombre, pp.cantidad \
+                    FROM pedidos p \
+                    JOIN clientes c ON p.rut_cliente = c.rut  \
+                    JOIN pedido_productos pp ON p.id = pp.pedido_id \
+                    JOIN producto pr ON pp.producto_id = pr.id \
+                    WHERE p.id = %s", (pedido_id,))
+    result = cursor.fetchall()
+    cursor.close()  
+
+    # Verificar si se encontró el pedido
+    if len(result) == 0:
         return make_response(jsonify({'error': 'Pedido no encontrado'}), 404)
+
+    # Construir la respuesta
+    pedido = {
+        'id': result[0][0],
+        'rut_cliente': result[0][1],
+        'fecha_pedido': result[0][2],
+        'productos': []
+    }
+
+    for row in result:
+        producto_id = row[3]
+        producto_nombre = row[4]
+        cantidad = row[5]
+
+        pedido['productos'].append({
+            'id': producto_id,
+            'nombre': producto_nombre,
+            'cantidad': cantidad
+        })
+
+    return jsonify(pedido)
 
 
 # PUT PEDIDO EDITAR
 
 @app.route('/api/pedidos/<int:id>', methods=['PUT'])
 def update_pedido(id):
-    cantidad = request.json['cantidad']
-    producto_id = request.json['producto_id']
+    # Obtener los datos del pedido a partir de la solicitud
+    datos_pedido = request.json
+    
+    # Extraer los campos necesarios del pedido
+    rut_cliente = datos_pedido['rut_cliente']
+    fecha_pedido = datos_pedido['fecha_pedido']
+    productos = datos_pedido['productos']
+    
+    # Realizar la actualización del pedido en la base de datos
     cursor = db.database.cursor()
-    sql = "UPDATE pedidos SET cantidad=%s, producto__id=%s WHERE id=%s"
-    data = (cantidad, producto_id, id)
-    cursor.execute(sql, data)
+    sql_pedido = "UPDATE pedidos SET rut_cliente=%s, fecha_pedido=%s WHERE id=%s"
+    data_pedido = (rut_cliente, fecha_pedido, id)
+    cursor.execute(sql_pedido, data_pedido)
+    
+    # Eliminar los productos asociados al pedido en la tabla pedido_productos
+    sql_delete_productos = "DELETE FROM pedido_productos WHERE pedido_id=%s"
+    cursor.execute(sql_delete_productos, (id,))
+    
+    # Insertar los nuevos productos asociados al pedido en la tabla pedido_productos
+    sql_insert_productos = "INSERT INTO pedido_productos (pedido_id, producto_id, cantidad) VALUES (%s, %s, %s)"
+    for producto in productos:
+        producto_id = producto['producto_id']
+        cantidad = producto['cantidad']
+        cursor.execute(sql_insert_productos, (id, producto_id, cantidad))
+    
     db.database.commit()
     cursor.close()
+    
     return make_response(jsonify({'message': 'Pedido actualizado exitosamente'}), 200)
 
 # DELETE PEDIDO
@@ -264,7 +309,13 @@ def update_pedido(id):
 @app.route('/api/pedidos/<int:id>', methods=['DELETE'])
 def delete_pedido(id):
     cursor = db.database.cursor()
+
+    # Eliminar los registros de la tabla pedido_productos relacionados con el pedido
+    cursor.execute("DELETE FROM pedido_productos WHERE pedido_id = %s", (id,))
+    
+    # Eliminar el registro del pedido en la tabla pedidos
     cursor.execute("DELETE FROM pedidos WHERE id = %s", (id,))
+
     db.database.commit()
     cursor.close()
     return make_response(jsonify({'message': 'Pedido eliminado exitosamente'}), 200)
