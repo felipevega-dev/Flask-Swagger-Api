@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, make_response, render_template, request, redirect, url_for
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_swagger import swagger
 import os 
 import database as db
 
@@ -7,27 +8,6 @@ template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 template_dir = os.path.join(template_dir, 'src', 'templates')
 
 app = Flask(__name__, template_folder= template_dir)
-
-SWAGGER_URL = '/api/docs' 
-API_URL = '/Flask-mysql-python/static/swagger.json'  
-
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,  # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
-    API_URL,
-    config={  # Swagger UI config overrides
-        'app_name': "Test application"
-    },
-    # oauth_config={  # OAuth config. See https://github.com/swagger-api/swagger-ui#oauth2-configuration .
-    #    'clientId': "your-client-id",
-    #    'clientSecret': "your-client-secret-if-required",
-    #    'realm': "your-realms",
-    #    'appName': "your-app-name",
-    #    'scopeSeparator': " ",
-    #    'additionalQueryStringParams': {'test': "hello"}
-    # }
-)
-
-app.register_blueprint(swaggerui_blueprint)
 
 #RUTAS DE LA APP
 
@@ -162,10 +142,20 @@ def update_producto(id):
 @app.route('/api/productos/<int:id>', methods=['DELETE'])
 def delete_producto(id):
     cursor = db.database.cursor()
+    # Eliminar los registros de la tabla pedido_productos
+    cursor.execute("DELETE FROM pedido_productos WHERE producto_id = %s", (id,))
     cursor.execute("DELETE FROM producto WHERE id = %s", (id,))
     db.database.commit()
     cursor.close()
     return make_response(jsonify({'message': 'Producto eliminado exitosamente'}), 200)
+
+cursor = db.database.cursor()
+
+
+
+
+
+
     
     
 #API PEDIDOS
@@ -343,7 +333,26 @@ def delete_pedido(id):
     return make_response(jsonify({'message': 'Pedido eliminado exitosamente'}), 200)
 
 
+# SWAGGER
+@app.route('/swagger')
+def swagger_spec():
+    swag = swagger(app)
+    swag['info']['version'] = "1.0"
+    swag['info']['title'] = "API Documentation"
+    return jsonify(swag)
+
+SWAGGER_URL = '/api/docs'
+API_URL = '/static/swagger.json'  
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "API Documentation"
+    }
+)
+
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
 if __name__ == '__main__':  
     app.run(port = 4000, debug=True)
-
-
