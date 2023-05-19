@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, make_response, render_template, request, redirect, url_for
+from flask import Flask, jsonify, make_response, render_template, request, redirect, send_from_directory, url_for
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_swagger import swagger
 import os 
@@ -9,10 +9,13 @@ template_dir = os.path.join(template_dir, 'src', 'templates')
 
 app = Flask(__name__, template_folder= template_dir)
 
-#RUTAS DE LA APP
+#AL INICIAR VA DIRECTAMENTE A SWAGGER DOCS
+@app.before_request
+def redirect_to_docs():
+    if request.path == '/':
+        return redirect(url_for('swagger_docs'))
 
 #CRUD
-
 @app.route('/')
 def Index():
     cursor = db.database.cursor()
@@ -25,7 +28,6 @@ def Index():
         insertObject.append(dict(zip(columNames, record)))
     cursor.close()
     return render_template('index.html', data = insertObject)
-
 @app.route('/user', methods=['POST'])
 def addUser():
     nombre = request.form['nombre']
@@ -41,8 +43,6 @@ def addUser():
         cursor.execute(sql, data)
         db.database.commit()
     return redirect(url_for('Index'))
-
-
 @app.route('/delete/<string:id>')
 def delete (id):
     cursor = db.database.cursor()
@@ -51,7 +51,6 @@ def delete (id):
     cursor.execute(sql, data)
     db.database.commit()
     return redirect(url_for('Index'))
-
 @app.route('/edit/<string:id>',methods=['POST'])
 def edit(id):
     nombre = request.form['nombre']
@@ -68,11 +67,9 @@ def edit(id):
         db.database.commit()
     return redirect(url_for('Index'))
     
-    
 #API PRODUCTOS
 
 # GET TODOS LOS PRODUCTOS
-
 @app.route('/api/productos', methods=['GET'])
 def obtener_productos():
     cursor = db.database.cursor()
@@ -86,9 +83,7 @@ def obtener_productos():
     cursor.close()
     return jsonify(result)
 
-
 # POST UN PRODUCTO
-
 @app.route('/api/productos', methods=['POST'])
 def create_producto():
     nombre = request.json['nombre']
@@ -104,9 +99,7 @@ def create_producto():
     cursor.close()
     return make_response(jsonify({'message': 'Producto creado exitosamente'}), 201)
 
-
 # GET PRODUCTO ESPECIFICO
-
 @app.route('/api/productos/<int:id>', methods=['GET'])
 def get_producto(id):
     cursor = db.database.cursor()
@@ -118,9 +111,7 @@ def get_producto(id):
     else:
         return make_response(jsonify({'error': 'Producto no encontrado'}), 404)
 
-
 # PUT ACTUALIZAR UN PRODUCTO
-
 @app.route('/api/productos/<int:id>', methods=['PUT'])
 def update_producto(id):
     nombre = request.json['nombre']
@@ -136,9 +127,7 @@ def update_producto(id):
     cursor.close()
     return make_response(jsonify({'message': 'Producto actualizado exitosamente'}), 200)
 
-
 # ELIMINAR UN PRODUCTO
-
 @app.route('/api/productos/<int:id>', methods=['DELETE'])
 def delete_producto(id):
     cursor = db.database.cursor()
@@ -148,20 +137,11 @@ def delete_producto(id):
     db.database.commit()
     cursor.close()
     return make_response(jsonify({'message': 'Producto eliminado exitosamente'}), 200)
-
 cursor = db.database.cursor()
-
-
-
-
-
-
-    
-    
+  
 #API PEDIDOS
 
 # GET TODOS PEDIDOS
-
 @app.route('/api/pedidos', methods=['GET'])
 def obtener_pedidos():
     cursor = db.database.cursor()
@@ -211,7 +191,6 @@ def obtener_pedidos():
     return jsonify(pedidos)
 
 # POST PEDIDOS
-
 @app.route('/api/pedidos', methods=['POST'])
 def crear_pedido():
     # Obtener los datos del pedido del cuerpo de la solicitud JSON
@@ -241,9 +220,7 @@ def crear_pedido():
 
     return jsonify({'message': 'Pedido creado exitosamente'}), 201
 
-
 # GET ESPECIFICO PEDIDOS
-
 @app.route('/api/pedidos/<int:pedido_id>', methods=['GET'])
 def obtener_pedido(pedido_id):
     cursor = db.database.cursor()
@@ -281,9 +258,7 @@ def obtener_pedido(pedido_id):
 
     return jsonify(pedido)
 
-
 # PUT PEDIDO EDITAR
-
 @app.route('/api/pedidos/<int:id>', methods=['PUT'])
 def update_pedido(id):
     # Obtener los datos del pedido a partir de la solicitud
@@ -317,7 +292,6 @@ def update_pedido(id):
     return make_response(jsonify({'message': 'Pedido actualizado exitosamente'}), 200)
 
 # DELETE PEDIDO
-
 @app.route('/api/pedidos/<int:id>', methods=['DELETE'])
 def delete_pedido(id):
     cursor = db.database.cursor()
@@ -332,14 +306,7 @@ def delete_pedido(id):
     cursor.close()
     return make_response(jsonify({'message': 'Pedido eliminado exitosamente'}), 200)
 
-
 # SWAGGER
-@app.route('/swagger')
-def swagger_spec():
-    swag = swagger(app)
-    swag['info']['version'] = "1.0"
-    swag['info']['title'] = "API Documentation"
-    return jsonify(swag)
 
 SWAGGER_URL = '/api/docs'
 API_URL = '/static/swagger.json'  
@@ -353,6 +320,11 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 )
 
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+
+@app.route('/api/docs/')
+def swagger_docs():
+    return send_from_directory('static', 'swagger-ui.html')
 
 if __name__ == '__main__':  
     app.run(port = 4000, debug=True)
