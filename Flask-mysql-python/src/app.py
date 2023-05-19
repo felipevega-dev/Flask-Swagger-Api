@@ -8,8 +8,8 @@ template_dir = os.path.join(template_dir, 'src', 'templates')
 
 app = Flask(__name__, template_folder= template_dir)
 
-SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
-API_URL = 'http://petstore.swagger.io/v2/swagger.json'  # Our API url (can of course be a local resource)
+SWAGGER_URL = '/api/docs' 
+API_URL = '/Flask-mysql-python/static/swagger.json'  
 
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,  # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
