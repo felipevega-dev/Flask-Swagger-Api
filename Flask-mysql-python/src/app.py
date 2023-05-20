@@ -1,6 +1,16 @@
 from flask import Flask, jsonify, make_response, render_template, request, redirect, send_from_directory, url_for
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_swagger import swagger
+import random
+import requests
+from transbank.error.transbank_error import TransbankError
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.common.options import WebpayOptions
+from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+from transbank.common.integration_api_keys import IntegrationApiKeys
+from transbank.common.integration_type import IntegrationType
+
+import requests
 import os 
 import database as db
 
@@ -326,5 +336,45 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 def swagger_docs():
     return send_from_directory('static', 'swagger-ui.html')
 
+
+
+@app.route('/crear_transaccion', methods=['POST'])
+def crear_transaccion():
+    buy_order = request.form.get('buy_order')
+    session_id = request.form.get('session_id')
+    amount = request.form.get('amount')
+    return_url = request.form.get('return_url')
+    
+    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
+    resp = tx.create(buy_order, session_id, amount, return_url)
+    
+    print(resp)
+    resp['url']
+    resp['token']
+    
+    return redirect(resp['url'])
+@app.route('/formulario_pago', methods=['GET'])
+def formulario_pago():
+    return render_template('formulario_pago.html')
+
+
+# Ruta para confirmar la transacción y procesar la respuesta
+@app.route('/confirmar_pago', methods=['POST'])
+def confirmar_pago():
+    # Obtener el token de transacción de la solicitud
+    token = request.form.get('token_ws')
+
+    # Confirmar la transacción utilizando el token
+    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
+    resp = tx.commit(token)
+
+    # Procesar la respuesta de confirmación
+    if resp['status'] == 'AUTHORIZED':
+        # La transacción se confirmó correctamente
+        return render_template('pago_exitoso.html')
+    else:
+        # La transacción no pudo ser confirmada
+        return render_template('pago_error.html')
+    
 if __name__ == '__main__':  
     app.run(port = 4000, debug=True)
