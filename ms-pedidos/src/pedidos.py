@@ -75,27 +75,47 @@ def crear_pedido():
     fecha_pedido = data['fecha_pedido']
     productos = data['productos']
 
-    # Insertar el pedido en la tabla de pedidos
     cursor = db.database.cursor()
-    sql = "INSERT INTO pedidos (rut_cliente, fecha_pedido) VALUES (%s, %s)"
-    cursor.execute(sql, (rut_cliente, fecha_pedido))
-    db.database.commit()
+    try:
+        # Verificar el stock de los productos antes de realizar el pedido
+        for producto in productos:
+            producto_id = producto['producto_id']
+            cantidad = producto['cantidad']
+            
+            # Obtener el stock disponible del producto
+            cursor.execute("SELECT stock FROM producto WHERE id = %s", (producto_id,))
+            stock_disponible = cursor.fetchone()[0]
 
-    # Obtener el ID del pedido recién insertado
-    pedido_id = cursor.lastrowid
+            if cantidad > stock_disponible:
+                # Si la cantidad solicitada es mayor al stock disponible, retornar un error
+                return jsonify({'error': 'No hay suficiente stock para el producto con ID {}'.format(producto_id)}), 400
 
-    # Insertar los productos del pedido en la tabla de pedido_productos
-    for producto in productos:
-        producto_id = producto['producto_id']
-        cantidad = producto['cantidad']
-        sql = "INSERT INTO pedido_productos (pedido_id, producto_id, cantidad) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (pedido_id, producto_id, cantidad))
+        # Insertar el pedido en la tabla de pedidos
+        sql = "INSERT INTO pedidos (rut_cliente, fecha_pedido) VALUES (%s, %s)"
+        cursor.execute(sql, (rut_cliente, fecha_pedido))
         db.database.commit()
 
-    cursor.close()
+        # Obtener el ID del pedido recién insertado
+        pedido_id = cursor.lastrowid
 
-    return jsonify({'message': 'Pedido creado exitosamente'}), 201
+        # Insertar los productos del pedido en la tabla de pedido_productos
+        for producto in productos:
+            producto_id = producto['producto_id']
+            cantidad = producto['cantidad']
+            sql = "INSERT INTO pedido_productos (pedido_id, producto_id, cantidad) VALUES (%s, %s, %s)"
+            cursor.execute(sql, (pedido_id, producto_id, cantidad))
+            db.database.commit()
 
+        return jsonify({'message': 'Pedido creado exitosamente'}), 201
+
+    except Exception as e:
+        # En caso de cualquier error, hacer rollback de la transacción
+        db.database.rollback()
+        return jsonify({'error': 'Error al crear el pedido: {}'.format(str(e))}), 500
+
+    finally:
+        cursor.close()
+        
 # GET ESPECIFICO PEDIDOS
 @app.route('/api/pedidos/<int:pedido_id>', methods=['GET'])
 def obtener_pedido(pedido_id):
@@ -203,4 +223,4 @@ def swagger_docs():
     return send_from_directory('static', 'swagger-ui.html')
 
 if __name__ == '__main__':  
-    app.run(port = 4000, debug=True)
+    app.run(port = 4001, debug=True)

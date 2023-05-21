@@ -50,4 +50,4 @@ def confirmar_pago():
         return render_template('pago_error.html')
     
 if __name__ == '__main__':  
-    app.run(port = 4000, debug=True)
+    app.run(port = 4002, debug=True)
