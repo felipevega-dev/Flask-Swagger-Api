@@ -1,0 +1,250 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Swagger Pedidos",
+    "description": "API para gestionar pedidos",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/pedidos": {
+      "get": {
+        "summary": "Obtener todos los pedidos",
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": 1,
+                    "rut_cliente": "12345678-9",
+                    "fecha_pedido": "2023-05-01",
+                    "productos": [
+                      {
+                        "id": 1,
+                        "nombre": "Producto 1",
+                        "cantidad": 2
+                      },
+                      {
+                        "id": 2,
+                        "nombre": "Producto 2",
+                        "cantidad": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "rut_cliente": "98765432-1",
+                    "fecha_pedido": "2023-05-05",
+                    "productos": [
+                      {
+                        "id": 3,
+                        "nombre": "Producto 3",
+                        "cantidad": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un nuevo pedido",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rut_cliente": {
+                    "type": "string"
+                  },
+                  "fecha_pedido": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "productos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "producto_id": {
+                          "type": "integer"
+                        },
+                        "cantidad": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["producto_id", "cantidad"]
+                    }
+                  }
+                },
+                "required": ["rut_cliente", "fecha_pedido", "productos"]
+              },
+              "example": {
+                "rut_cliente": "12345678-9",
+                "fecha_pedido": "2023-05-10",
+                "productos": [
+                  {
+                    "producto_id": 1,
+                    "cantidad": 2
+                  },
+                  {
+                    "producto_id": 2,
+                    "cantidad": 1
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido creado exitosamente"
+          }
+        }
+      }
+    },
+    "/api/pedidos/{pedido_id}": {
+      "get": {
+        "summary": "Obtener un pedido específico",
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID del pedido",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido encontrado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 1,
+                  "rut_cliente": "12345678-9",
+                  "fecha_pedido": "2023-05-01",
+                  "productos": [
+                    {
+                      "id": 1,
+                      "nombre": "Producto 1",
+                      "cantidad": 2
+                    },
+                    {
+                      "id": 2,
+                      "nombre": "Producto 2",
+                      "cantidad": 1
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar un pedido",
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID del pedido",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rut_cliente": {
+                    "type": "string"
+                  },
+                  "fecha_pedido": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "productos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "producto_id": {
+                          "type": "integer"
+                        },
+                        "cantidad": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["producto_id", "cantidad"]
+                    }
+                  }
+                },
+                "required": ["rut_cliente", "fecha_pedido", "productos"]
+              },
+              "example": {
+                "rut_cliente": "12345678-9",
+                "fecha_pedido": "2023-05-15",
+                "productos": [
+                  {
+                    "producto_id": 1,
+                    "cantidad": 3
+                  },
+                  {
+                    "producto_id": 2,
+                    "cantidad": 2
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido actualizado exitosamente"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar un pedido",
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID del pedido",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido eliminado exitosamente"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          }
+        }
+      }
+    }
+  }
+}

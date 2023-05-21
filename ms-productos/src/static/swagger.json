@@ -1,0 +1,197 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Swagger Productos",
+    "description": "API para gestionar productos",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/productos": {
+      "get": {
+        "summary": "Obtener todos los productos",
+        "responses": {
+          "200": {
+            "description": "Lista de productos",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 1,
+                  "nombre": "Producto 1",
+                  "descripcion": "Descripción del producto 1",
+                  "categoria": "Categoría 1",
+                  "precio": 10.99,
+                  "stock": 100
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un nuevo producto",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "descripcion": {
+                    "type": "string"
+                  },
+                  "categoria": {
+                    "type": "string"
+                  },
+                  "precio": {
+                    "type": "number"
+                  },
+                  "stock": {
+                    "type": "integer"
+                  }
+                },
+                "required": ["nombre", "descripcion", "categoria", "precio", "stock"]
+              },
+              "example": {
+                "nombre": "Nuevo Producto",
+                "descripcion": "Descripción del nuevo producto",
+                "categoria": "Categoría del nuevo producto",
+                "precio": 19.99,
+                "stock": 50
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado exitosamente"
+          }
+        }
+      }
+    },
+    "/api/productos/{id}": {
+      "get": {
+        "summary": "Obtener un producto específico",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID del producto",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del producto",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 1,
+                  "nombre": "Producto 1",
+                  "descripcion": "Descripción del producto 1",
+                  "categoria": "Categoría 1",
+                  "precio": 10.99,
+                  "stock": 100
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar un producto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID del producto",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string"
+                  },
+                  "descripcion": {
+                    "type": "string"
+                  },
+                  "categoria": {
+                    "type": "string"
+                  },
+                  "precio": {
+                    "type": "number"
+                  },
+                  "stock": {
+                    "type": "integer"
+                  }
+                },
+                "required": ["nombre", "descripcion", "categoria", "precio", "stock"]
+              },
+              "example": {
+                "nombre": "Producto Actualizado",
+                "descripcion": "Descripción del producto actualizado",
+                "categoria": "Categoría del producto actualizado",
+                "precio": 24.99,
+                "stock": 75
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producto actualizado exitosamente"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar un producto",
+        "description": "Elimina un producto por su ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID del producto a eliminar",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto eliminado exitosamente"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        },
+        "x-code-samples": [
+          {
+            "lang": "Python",
+            "source": "cursor = db.database.cursor()\n\n# Eliminar los registros de la tabla pedido_productos\ncursor.execute(\"DELETE FROM pedido_productos WHERE producto_id = %s\", (id,))\n\n# Eliminar el producto\ncursor.execute(\"DELETE FROM producto WHERE id = %s\", (id,))\n\n# Confirmar los cambios\ndb.database.commit()\n\ncursor.close()\n\nreturn make_response(jsonify({'message': 'Producto eliminado exitosamente'}), 200)"
+          }
+        ]
+      }
+    }
+  }
+}

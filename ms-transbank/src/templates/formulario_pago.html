@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Formulario de Pago</title>
+</head>
+<body>
+    <form action="{{ url_for('crear_transaccion') }}" method="POST">
+        <input type="text" name="buy_order" placeholder="Numero de compra">
+        <input type="text" name="session_id" placeholder="Session ID">
+        <input type="text" name="amount" placeholder="Monto">
+        <input type="hidden" name="return_url" value="{{ url_for('confirmar_pago', _external=True) }}">
+        <input type="submit" value="Pagar">
+    </form>
+</body>
+</html>
