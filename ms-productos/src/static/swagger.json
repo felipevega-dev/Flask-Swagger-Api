@@ -8,19 +8,48 @@
   "paths": {
     "/api/productos": {
       "get": {
-        "summary": "Obtener todos los productos",
+        "summary": "Obtener todos los productos en stock",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Tamaño de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Lista de productos",
+            "description": "Lista de productos en stock paginados",
             "content": {
               "application/json": {
                 "example": {
-                  "id": 1,
-                  "nombre": "Producto 1",
-                  "descripcion": "Descripción del producto 1",
-                  "categoria": "Categoría 1",
-                  "precio": 10.99,
-                  "stock": 100
+                  "page": 1,
+                  "page_size": 10,
+                  "total_count": 50,
+                  "productos": [
+                    {
+                      "id": 1,
+                      "nombre": "Producto 1",
+                      "descripcion": "Descripción del producto 1",
+                      "categoria": "Categoría 1",
+                      "precio": 10.99,
+                      "stock": 100
+                    }
+                  ]
                 }
               }
             }

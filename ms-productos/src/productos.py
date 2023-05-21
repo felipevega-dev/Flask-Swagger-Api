@@ -66,16 +66,46 @@ def edit(id):
 # GET TODOS LOS PRODUCTOS
 @app.route('/api/productos', methods=['GET'])
 def obtener_productos():
+    page = request.args.get('page', default=1, type=int)
+    page_size = request.args.get('page_size', default=10, type=int)
+
+    # Calcular los índices de inicio y fin para la paginación
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+
+    # Obtener la lista de productos en stock con stock mayor o igual a 1
     cursor = db.database.cursor()
-    cursor.execute("SELECT * FROM producto")
-    myresult = cursor.fetchall()
-    #Convertir los datos a lista de diccionarios
-    result = []
-    columNames = [column[0] for column in cursor.description]
-    for record in myresult:
-        result.append(dict(zip(columNames, record)))
+    sql = "SELECT id, nombre, descripcion, categoria, precio, stock FROM producto WHERE stock >= 1 ORDER BY id ASC"
+    cursor.execute(sql)
+    productos = cursor.fetchall()
+
+    # Aplicar la paginación
+    paginated_products = productos[start_index:end_index]
+
+    # Obtener el número total de productos en stock
+    total_count = len(productos)
+
     cursor.close()
-    return jsonify(result)
+
+    # Crear la respuesta paginada con nombres de los valores
+    response = {
+        "page": page,
+        "page_size": page_size,
+        "total_count": total_count,
+        "productos": [
+            {
+                "id": producto[0],
+                "nombre": producto[1],
+                "descripcion": producto[2],
+                "categoria": producto[3],
+                "precio": producto[4],
+                "stock": producto[5]
+            }
+            for producto in paginated_products
+        ]
+    }
+
+    return jsonify(response), 200
 
 # POST UN PRODUCTO
 @app.route('/api/productos', methods=['POST'])
