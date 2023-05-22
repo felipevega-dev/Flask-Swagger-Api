@@ -26,28 +26,57 @@ def crear_transaccion():
     amount = request.form.get('amount')
     return_url = request.form.get('return_url')
 
-    tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
+    options = WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST)
+    tx = Transaction(options)
     resp = tx.create(buy_order, session_id, amount, return_url)
-
+    
     print(resp)
-    redirect_url = resp['url'] + '?token_ws=' + resp['token']
-    return redirect(redirect_url)
+    
+    if resp['token']:
+        redirect_url = resp['url'] + '?token_ws=' + resp['token']
+        return redirect(redirect_url)
+    else:
+        # Ocurrió un error al crear la transacción, mostrar mensaje de error
+        return render_template('pago_error.html', error_message='Error al crear la transacción')
 
-@app.route('/formulario_pago', methods=['GET'])
+@app.route('/formulario_pago', methods=['GET', 'POST'])
 def formulario_pago():
-    return render_template('formulario_pago.html')
+    if request.method == 'POST':
+        return redirect(url_for('crear_transaccion'))
+    else:
+        return render_template('formulario_pago.html')
 
-@app.route('/confirmar_pago', methods=['POST'])
+@app.route('/confirmar_pago', methods=['POST', 'GET'])
 def confirmar_pago():
-    token = request.form.get('token_ws')
+    if request.method == 'GET':
+        token = request.args.get('token_ws')
+    elif request.method == 'POST':
+        token = request.form.get('token_ws')
+    else:
+        # Método no permitido, devuelve una respuesta adecuada
+        return 'Method Not Allowed', 405
 
     tx = Transaction(WebpayOptions(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, IntegrationType.TEST))
     resp = tx.commit(token)
 
-    if resp['status'] == 'AUTHORIZED':
-        return render_template('pago_exitoso.html')
+    if resp['response_code'] == 0 and resp['status'] == 'AUTHORIZED':
+        # La transacción fue aprobada, muestra el comprobante o página de éxito al usuario
+        vci = resp['vci']
+        amount = resp['amount']
+        buy_order = resp['buy_order']
+        session_id = resp['session_id']
+        card_detail = resp['card_detail']
+        accounting_date = resp['accounting_date']
+        transaction_date = resp['transaction_date']
+        authorization_code = resp['authorization_code']
+        payment_type_code = resp['payment_type_code']
+        installments_number = resp['installments_number']
+
+        return render_template('pago_exitoso.html', vci=vci, amount=amount, buy_order=buy_order, session_id=session_id, card_detail=card_detail, accounting_date=accounting_date, transaction_date=transaction_date, authorization_code=authorization_code, payment_type_code=payment_type_code, installments_number=installments_number)
     else:
+        # La transacción no fue aprobada, muestra una página de error al usuario
         return render_template('pago_error.html')
+
     
 if __name__ == '__main__':  
     app.run(port = 4002, debug=True)

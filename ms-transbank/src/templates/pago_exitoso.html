@@ -2,9 +2,20 @@
 <html>
 <head>
     <title>Pago Exitoso</title>
+    <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-    <h1>Pago Exitoso</h1>
-    <p>¡Su pago ha sido procesado exitosamente!</p>
+    <br>
+    <div class="container">
+        <h1>Pago Exitoso</h1>
+        <p>¡Su pago ha sido procesado exitosamente!</p>
+        
+        <h2>Detalles de la transacción:</h2>
+        <p>VCI: {{ vci }}</p>
+        <p>Monto: {{ amount }}</p>
+        <p>Número de compra: {{ buy_order }}</p>
+        <p>ID de sesión: {{ session_id }}</p>
+        <!-- Mostrar otros datos de la transacción aquí -->
+    </div>
 </body>
 </html>
