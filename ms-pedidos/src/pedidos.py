@@ -20,32 +20,42 @@ def redirect_to_docs():
 # GET TODOS PEDIDOS
 @app.route('/api/pedidos', methods=['GET'])
 def obtener_pedidos():
+    page = request.args.get('page', default=1, type=int)
+    page_size = request.args.get('page_size', default=10, type=int)
+
+    # Calcular los índices de inicio y fin para la paginación
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+
     cursor = db.database.cursor()
     cursor.execute("SELECT p.id AS pedido_id, c.rut AS cliente_rut, p.fecha_pedido, pp.producto_id, pr.nombre AS producto_nombre, pp.cantidad \
                     FROM pedidos p \
                     JOIN clientes c ON p.rut_cliente = c.rut  \
                     JOIN pedido_productos pp ON p.id = pp.pedido_id \
-                    JOIN producto pr ON pp.producto_id = pr.id")
+                    JOIN producto pr ON pp.producto_id = pr.id \
+                    ORDER BY p.id ASC")
     result = cursor.fetchall()
     cursor.close()
-    
-    #Convertir los datos a lista de diccionarios
+
+    # Obtener los pedidos paginados
+    paginated_pedidos = result[start_index:end_index]
+
+    # Convertir los datos a una lista de diccionarios
     pedidos = []
-    for row in result:
+    for row in paginated_pedidos:
         pedido_id = row[0]
         cliente_rut = row[1]
         fecha = row[2]
         producto_id = row[3]
         producto_nombre = row[4]
         cantidad = row[5]
-        
+
         # Buscar si el pedido ya existe en la lista
         pedido_existente = next((pedido for pedido in pedidos if pedido['id'] == pedido_id), None)
-        
+
         if pedido_existente:
             # Agregar el producto y su cantidad al pedido existente
             pedido_existente['productos'].append({
-                
                 'id': producto_id,
                 'nombre': producto_nombre,
                 'cantidad': cantidad
@@ -63,8 +73,17 @@ def obtener_pedidos():
                 }]
             }
             pedidos.append(pedido)
-    
-    return jsonify(pedidos)
+
+    # Crear la respuesta paginada
+    response = {
+        "page": page,
+        "page_size": page_size,
+        "total_count": len(result),
+        "pedidos": pedidos
+    }
+
+    return jsonify(response), 200
+
 
 # POST PEDIDOS
 @app.route('/api/pedidos', methods=['POST'])

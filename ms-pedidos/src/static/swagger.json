@@ -9,42 +9,69 @@
     "/api/pedidos": {
       "get": {
         "summary": "Obtener todos los pedidos",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Tamaño de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Lista de pedidos",
+            "description": "Lista de pedidos paginados",
             "content": {
               "application/json": {
-                "example": [
-                  {
-                    "id": 1,
-                    "rut_cliente": "12345678-9",
-                    "fecha_pedido": "2023-05-01",
-                    "productos": [
-                      {
-                        "id": 1,
-                        "nombre": "Producto 1",
-                        "cantidad": 2
-                      },
-                      {
-                        "id": 2,
-                        "nombre": "Producto 2",
-                        "cantidad": 1
-                      }
-                    ]
-                  },
-                  {
-                    "id": 2,
-                    "rut_cliente": "98765432-1",
-                    "fecha_pedido": "2023-05-05",
-                    "productos": [
-                      {
-                        "id": 3,
-                        "nombre": "Producto 3",
-                        "cantidad": 3
-                      }
-                    ]
-                  }
-                ]
+                "example": {
+                  "page": 1,
+                  "page_size": 10,
+                  "total_count": 20,
+                  "pedidos": [
+                    {
+                      "id": 1,
+                      "rut_cliente": "12345678-9",
+                      "fecha_pedido": "2023-05-01",
+                      "productos": [
+                        {
+                          "id": 1,
+                          "nombre": "Producto 1",
+                          "cantidad": 2
+                        },
+                        {
+                          "id": 2,
+                          "nombre": "Producto 2",
+                          "cantidad": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": 2,
+                      "rut_cliente": "98765432-1",
+                      "fecha_pedido": "2023-05-05",
+                      "productos": [
+                        {
+                          "id": 3,
+                          "nombre": "Producto 3",
+                          "cantidad": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             }
           }
